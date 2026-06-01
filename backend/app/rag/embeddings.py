@@ -1,7 +1,4 @@
-from sentence_transformers import (
-    SentenceTransformer
-)
-
+from sentence_transformers import SentenceTransformer
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,20 +7,25 @@ logger = logging.getLogger(__name__)
 class EmbeddingModel:
 
     def __init__(self):
+        self.model = None
 
-        logger.info(
-            "Loading embedding model..."
-        )
+    def get_model(self):
 
-        self.model = (
-           SentenceTransformer(
-   "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-)
-        )
+        if self.model is None:
 
-        logger.info(
-            "Embedding model loaded"
-        )
+            logger.info(
+                "Loading embedding model..."
+            )
+
+            self.model = SentenceTransformer(
+                "sentence-transformers/all-MiniLM-L6-v2"
+            )
+
+            logger.info(
+                "Embedding model loaded"
+            )
+
+        return self.model
 
     def generate_embeddings(
         self,
@@ -37,50 +39,38 @@ class EmbeddingModel:
                 f"for {len(chunks)} chunks"
             )
 
-            # Extract chunk text
             texts = [
                 chunk["content"]
                 for chunk in chunks
             ]
 
-            # Generate embeddings
-            embeddings = self.model.encode(
+            model = self.get_model()
+
+            embeddings = model.encode(
                 texts,
                 normalize_embeddings=True,
-                batch_size=32,
-                show_progress_bar=True,
+                batch_size=16,
+                show_progress_bar=False,
             )
 
             enriched_chunks = []
 
-            # Attach embeddings
             for chunk, embedding in zip(
                 chunks,
                 embeddings,
             ):
 
-                enriched_chunk = {
-                    "content": chunk[
-                        "content"
-                    ],
-                    "source": chunk[
-                        "source"
-                    ],
-                    "chunk_id": chunk[
-                        "chunk_id"
-                    ],
-                    "embedding": (
-                        embedding.tolist()
-                    ),
-                }
-
                 enriched_chunks.append(
-                    enriched_chunk
+                    {
+                        "content": chunk["content"],
+                        "source": chunk["source"],
+                        "chunk_id": chunk["chunk_id"],
+                        "embedding": embedding.tolist(),
+                    }
                 )
 
             logger.info(
-                f"Generated "
-                f"{len(enriched_chunks)} embeddings"
+                f"Generated {len(enriched_chunks)} embeddings"
             )
 
             return enriched_chunks
@@ -94,5 +84,5 @@ class EmbeddingModel:
             raise
 
 
-# Singleton instance
+# Singleton instance (safe now because model isn't loaded yet)
 embedding_model = EmbeddingModel()
