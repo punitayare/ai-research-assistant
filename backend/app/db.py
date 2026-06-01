@@ -1,7 +1,7 @@
 import os
 
 import psycopg2
-
+print("DB_HOST =", os.getenv("DB_HOST"))
 
 conn = psycopg2.connect(
     host=os.getenv("DB_HOST"),
