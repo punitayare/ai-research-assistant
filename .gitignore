@@ -42,7 +42,8 @@ ENV/
 
 uploads/
 uploaded_pdfs/
-study_uploads/
+study-uploaded-pdfs/
+study-upload/
 
 # =========================
 # ChromaDB
