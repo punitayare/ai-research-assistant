@@ -3,6 +3,8 @@ import logging
 
 from uuid import uuid4
 
+from app.db import conn, cursor
+
 logger = logging.getLogger(__name__)
 
 client = chromadb.PersistentClient(
@@ -160,3 +162,13 @@ def get_all_documents():
         )
 
         raise
+
+
+def save_document(filename: str, file_path: str):
+    cursor.execute("""
+        INSERT INTO documents (filename, file_path)
+        VALUES (%s, %s)
+        ON CONFLICT (filename) DO NOTHING
+    """, (filename, file_path))
+
+    conn.commit()
