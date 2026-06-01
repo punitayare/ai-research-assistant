@@ -1,32 +1,54 @@
+# =========================
+# Core API
+# =========================
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
 python-multipart==0.0.20
 python-dotenv==1.1.1
+requests==2.32.4
+tqdm==4.67.1
 
-groq==0.30.0
-
-chromadb==1.0.15
-
-sentence-transformers==5.0.0
-
+# =========================
+# Data / ML stack (IMPORTANT: compatible set)
+# =========================
 numpy==1.26.4
 scipy==1.11.4
 scikit-learn==1.4.2
-pydantic==2.11.7
+
+# =========================
+# LLM / AI
+# =========================
+groq==0.30.0
+sentence-transformers==5.0.0
+
+# =========================
+# Vector DB
+# =========================
+chromadb==1.0.15
+
+# =========================
+# PDF processing
+# =========================
 pypdf==5.9.0
 pdfplumber==0.11.7
 PyMuPDF==1.26.3
 
+# =========================
+# Database
+# =========================
+psycopg2-binary
 
-requests==2.32.4
+# =========================
+# LangChain ecosystem (IMPORTANT: aligned versions)
+# =========================
+langchain==0.3.20
+langchain-core==0.3.20
+langchain-community==0.3.20
+langchain-text-splitters==0.3.20
+langgraph==0.2.0
 
-tqdm==4.67.1
-
+# =========================
+# Pydantic (IMPORTANT: avoid duplicates)
+# =========================
 pydantic==2.11.7
 starlette==0.47.2
-psycopg2-binary
-langchain>=0.3.20
-langchain-core>=0.3.20
-langchain-community>=0.3.20
-
-langgraph>=0.2.0
