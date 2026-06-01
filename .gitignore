@@ -1,0 +1,128 @@
+# =========================
+# Python
+# =========================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# =========================
+# FastAPI Uploads
+# =========================
+
+uploads/
+uploaded_pdfs/
+
+# =========================
+# ChromaDB
+# =========================
+
+chroma_db/
+chroma/
+
+# =========================
+# Logs
+# =========================
+
+*.log
+logs/
+
+# =========================
+# VS Code
+# =========================
+
+.vscode/
+
+# =========================
+# PyCharm
+# =========================
+
+.idea/
+
+# =========================
+# Jupyter
+# =========================
+
+.ipynb_checkpoints/
+
+# =========================
+# macOS
+# =========================
+
+.DS_Store
+
+# =========================
+# Windows
+# =========================
+
+Thumbs.db
+Desktop.ini
+
+# =========================
+# Next.js
+# =========================
+
+.next/
+out/
+
+# Node Modules
+node_modules/
+
+# Build Output
+build/
+
+# Cache
+.cache/
+
+# =========================
+# Testing
+# =========================
+
+.coverage
+pytest_cache/
+htmlcov/
+
+# =========================
+# TypeScript
+# =========================
+
+*.tsbuildinfo
+
+# =========================
+# Misc
+# =========================
+
+*.sqlite3
+*.db
+*.bak
+*.tmp
