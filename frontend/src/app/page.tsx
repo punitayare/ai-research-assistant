@@ -121,12 +121,7 @@ export default function Home() {
                 />
               </Link>
 
-              <Link
-                href="/mindmap"
-                className="px-6 md:px-8 py-3 md:py-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition text-sm md:text-base"
-              >
-                Generate Mind Map
-              </Link>
+              
 
             </div>
 
