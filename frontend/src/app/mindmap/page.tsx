@@ -28,7 +28,7 @@ export default function Page() {
     async function loadDocuments() {
       try {
         const response = await fetch(
-          "http://localhost:8000/uploaded-pdfs"
+          "https://ai-research-assistant-production-0ae1.up.railway.app/uploaded-pdfs"
         );
 
         const data = await response.json();
@@ -68,7 +68,7 @@ export default function Page() {
       setLoading(true);
 
       const response = await fetch(
-        "http://localhost:8000/api/mindmap",
+        "https://ai-research-assistant-production-0ae1.up.railway.app/api/mindmap",
         {
           method: "POST",
           headers: {

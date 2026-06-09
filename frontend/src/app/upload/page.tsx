@@ -54,7 +54,7 @@ export default function UploadPage() {
     try {
 
       const res = await axios.get(
-        "http://127.0.0.1:8000/uploaded-pdfs"
+        "https://ai-research-assistant-production-0ae1.up.railway.app/uploaded-pdfs"
       );
 
       setUploadedFiles(
@@ -135,7 +135,7 @@ export default function UploadPage() {
       simulateProcessingSteps();
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/upload",
+        "https://ai-research-assistant-production-0ae1.up.railway.app/upload",
         formData,
         {
           headers: {
@@ -172,7 +172,7 @@ export default function UploadPage() {
     try {
 
       await axios.delete(
-        `http://127.0.0.1:8000/delete-pdf/${filename}`
+        `https://ai-research-assistant-production-0ae1.up.railway.app/delete-pdf/${filename}`
       );
 
       setUploadedFiles((prev) =>

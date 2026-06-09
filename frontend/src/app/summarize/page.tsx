@@ -89,7 +89,7 @@ export default function StudyPage() {
 
       const response =
         await axios.get(
-          "http://127.0.0.1:8000/study-uploaded-pdfs"
+          "https://ai-research-assistant-production-0ae1.up.railway.app/study-uploaded-pdfs"
         );
 
       setPdfs(response.data.pdfs);
@@ -120,7 +120,7 @@ export default function StudyPage() {
       setUploading(true);
 
       await axios.post(
-        "http://127.0.0.1:8000/study-upload",
+        "https://ai-research-assistant-production-0ae1.up.railway.app/study-upload",
         formData,
         {
           headers: {
@@ -157,7 +157,7 @@ export default function StudyPage() {
 
   try {
     await axios.delete(
-      `http://127.0.0.1:8000/study-upload/${encodeURIComponent(
+      `https://ai-research-assistant-production-0ae1.up.railway.app/study-upload/${encodeURIComponent(
         filename
       )}`
     );
@@ -205,7 +205,7 @@ export default function StudyPage() {
 
       const response =
         await axios.post(
-          "http://127.0.0.1:8000/summarize",
+          "https://ai-research-assistant-production-0ae1.up.railway.app/summarize",
           {
             filename: selectedPDF,
             language:
@@ -241,7 +241,7 @@ export default function StudyPage() {
 
         const response =
           await axios.post(
-            "http://127.0.0.1:8000/flashcards",
+            "https://ai-research-assistant-production-0ae1.up.railway.app/flashcards",
             {
               filename:
                 selectedPDF,
