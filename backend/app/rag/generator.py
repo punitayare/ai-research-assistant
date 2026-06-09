@@ -1,27 +1,30 @@
-
 from groq import Groq
 from dotenv import load_dotenv
 import os
 
-# Load environment variables
 load_dotenv()
 
-# Initialize Groq client
-client = Groq(
-    api_key=os.getenv("GROQ_API_KEY")
-)
+
+def get_client():
+    api_key = os.getenv("GROQ_API_KEY")
+
+    if not api_key:
+        raise RuntimeError(
+            "GROQ_API_KEY environment variable is not set"
+        )
+
+    return Groq(api_key=api_key)
+
 
 def generate_response(query: str, context_chunks):
 
-    # Combine retrieved chunks
+    client = get_client()
+
     context = "\n\n".join(
-        [
-            chunk["content"]
-            for chunk in context_chunks
-        ]
+        chunk["content"]
+        for chunk in context_chunks
     )
 
-    # Strong RAG prompt
     prompt = f"""
 You are an AI academic research assistant.
 
@@ -42,17 +45,14 @@ QUESTION:
 ANSWER:
 """
 
-    # Generate response
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
-
         messages=[
             {
                 "role": "user",
                 "content": prompt
             }
         ],
-
         temperature=0.3,
         max_tokens=1024,
     )
