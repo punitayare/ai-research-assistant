@@ -1,37 +1,50 @@
-print("rag_upload imported", flush=True)
+print("RAG: START", flush=True)
+
+print("RAG: importing fastapi", flush=True)
 from fastapi import APIRouter, UploadFile, File, BackgroundTasks
-from fastapi import APIRouter, UploadFile, File, BackgroundTasks
-from pathlib import Path
+
+print("RAG: importing tempfile/pathlib", flush=True)
 import tempfile
+from pathlib import Path
 
+print("RAG: importing db", flush=True)
 from app.db import cursor, conn
+
+print("RAG: db imported", flush=True)
+
+print("RAG: importing storage", flush=True)
 from app.services.storage import (
     upload_pdf_to_supabase,
     delete_pdf_from_supabase
 )
 
+print("RAG: storage imported", flush=True)
+
+print("RAG: importing pdf_parser", flush=True)
 from app.rag.pdf_parser import extract_text_from_pdf
+
+print("RAG: pdf_parser imported", flush=True)
+
+print("RAG: importing chunker", flush=True)
 from app.rag.chunker import chunk_text
+
+print("RAG: chunker imported", flush=True)
+
+print("RAG: importing embeddings", flush=True)
 from app.rag.embeddings import embedding_model
+
+print("RAG: embeddings imported", flush=True)
+
+print("RAG: importing vector_store", flush=True)
 from app.rag.vector_store import (
     save_document,
     store_chunks,
     collection
-)
-from app.db import cursor,conn
-from app.services.storage import (
-    upload_pdf_to_supabase,
-    delete_pdf_from_supabase
 )
 
-from app.rag.pdf_parser import extract_text_from_pdf
-from app.rag.chunker import chunk_text
-from app.rag.embeddings import embedding_model
-from app.rag.vector_store import (
-    save_document,
-    store_chunks,
-    collection
-)
+print("RAG: vector_store imported", flush=True)
+
+print("RAG: IMPORT COMPLETE", flush=True)
 
 router = APIRouter()
 
@@ -73,19 +86,16 @@ async def upload_pdf(
 
     file_bytes = await file.read()
 
-    # Upload PDF to Supabase Storage
     public_url = upload_pdf_to_supabase(
         file_bytes,
         file.filename
     )
 
-    # Save metadata to PostgreSQL
     save_document(
         file.filename,
         public_url
     )
 
-    # Create temporary file (Windows + Linux compatible)
     with tempfile.NamedTemporaryFile(
         delete=False,
         suffix=".pdf"
@@ -94,7 +104,6 @@ async def upload_pdf(
         temp_file.write(file_bytes)
         temp_path = temp_file.name
 
-    # Process PDF in background
     background_tasks.add_task(
         process_pdf,
         temp_path,
@@ -106,7 +115,6 @@ async def upload_pdf(
         "file_url": public_url,
         "status": "processing_started"
     }
-
 
 
 @router.get("/uploaded-pdfs")
@@ -130,45 +138,39 @@ async def get_uploaded_pdfs():
         ]
     }
 
+
 @router.delete("/delete-pdf/{filename}")
 async def delete_pdf(filename: str):
 
     try:
 
-        # Delete from Supabase Storage
-        delete_pdf_from_supabase(
-            filename
-        )
+        delete_pdf_from_supabase(filename)
 
-        # Delete vectors from ChromaDB
         results = collection.get(
             where={
                 "source": filename
             }
         )
 
-        ids = results.get(
-            "ids",
-            []
-        )
+        ids = results.get("ids", [])
 
         if ids:
-            collection.delete(
-                ids=ids
-            )
+            collection.delete(ids=ids)
 
-        # Delete metadata from PostgreSQL
         cursor.execute("""
             DELETE FROM documents
             WHERE filename = %s
         """, (filename,))
 
+        conn.commit()
+
         return {
-            "message":
-            f"{filename} deleted successfully"
+            "message": f"{filename} deleted successfully"
         }
 
     except Exception as e:
+
+        conn.rollback()
 
         return {
             "error": str(e)

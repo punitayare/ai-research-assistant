@@ -1,20 +1,36 @@
 print("RETRIEVER: START", flush=True)
 
+import logging
 import chromadb
 
 print("RETRIEVER: CHROMADB IMPORTED", flush=True)
 
-client = chromadb.PersistentClient(
-    path="chroma_db"
-)
+logger = logging.getLogger(__name__)
 
-print("RETRIEVER: CLIENT CREATED", flush=True)
+try:
+    client = chromadb.PersistentClient(
+        path="chroma_db"
+    )
 
-collection = client.get_or_create_collection(
-    name="research_papers"
-)
+    print("RETRIEVER: CLIENT CREATED", flush=True)
 
-print("RETRIEVER: COLLECTION CREATED", flush=True)
+    collection = client.get_or_create_collection(
+        name="research_papers"
+    )
+
+    print("RETRIEVER: COLLECTION CREATED", flush=True)
+
+except Exception as e:
+
+    print(
+        f"RETRIEVER ERROR: {e}",
+        flush=True
+    )
+
+    raise
+
+from app.rag.embeddings import embedding_model
+
 
 def retrieve_relevant_chunks(
     query: str,
@@ -25,8 +41,7 @@ def retrieve_relevant_chunks(
     try:
 
         logger.info(
-            f"Retrieving chunks "
-            f"for query: {query}"
+            f"Retrieving chunks for query: {query}"
         )
 
         print(
@@ -34,27 +49,25 @@ def retrieve_relevant_chunks(
             document_names
         )
 
-        # NO PDF SELECTED
         if (
             document_names is None
             or len(document_names) == 0
         ):
 
-            print(
-                "\nNo PDFs selected"
-            )
+            print("\nNo PDFs selected")
 
             return []
 
-        # GENERATE QUERY EMBEDDING
+        # Ensure model is loaded
+        model = embedding_model.get_model()
+
         query_embedding = (
-            embedding_model.model.encode(
+            model.encode(
                 query,
                 normalize_embeddings=True,
             ).tolist()
         )
 
-        # STRICT PDF FILTER
         where_filter = {
             "source": {
                 "$in": document_names
@@ -66,12 +79,6 @@ def retrieve_relevant_chunks(
             where_filter
         )
 
-        logger.info(
-            f"Filtering PDFs: "
-            f"{document_names}"
-        )
-
-        # QUERY CHROMADB
         results = collection.query(
             query_embeddings=[
                 query_embedding
@@ -106,36 +113,36 @@ def retrieve_relevant_chunks(
                     "content": doc,
                     "source": metadata.get(
                         "source",
-                        "Unknown",
+                        "Unknown"
                     ),
                     "chunk_id": metadata.get(
                         "chunk_id",
-                        -1,
+                        -1
                     ),
                 }
             )
 
-        print(
-            "\nRETRIEVED PDFs:"
-        )
+        print("\nRETRIEVED PDFs:")
 
         for chunk in retrieved_chunks:
 
-            print(
-                chunk["source"]
-            )
+            print(chunk["source"])
 
         logger.info(
-            f"Retrieved "
-            f"{len(retrieved_chunks)} chunks"
+            f"Retrieved {len(retrieved_chunks)} chunks"
         )
 
         return retrieved_chunks
 
-    except Exception:
+    except Exception as e:
 
         logger.exception(
             "Chunk retrieval failed"
+        )
+
+        print(
+            f"RETRIEVER ERROR: {e}",
+            flush=True
         )
 
         return []
