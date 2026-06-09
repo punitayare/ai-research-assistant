@@ -163,12 +163,25 @@ def get_all_documents():
 
         raise
 
+def save_document(filename, file_url):
+    try:
+        print("Saving document...")
+        print(filename)
+        print(file_url)
 
-def save_document(filename: str, file_path: str):
-    cursor.execute("""
-        INSERT INTO documents (filename, file_path)
-        VALUES (%s, %s)
-        ON CONFLICT (filename) DO NOTHING
-    """, (filename, file_path))
+        cursor.execute("""
+            INSERT INTO documents
+            (filename, file_url)
+            VALUES (%s, %s)
+            ON CONFLICT (filename)
+            DO NOTHING
+        """, (filename, file_url))
 
-    conn.commit()
+        conn.commit()
+
+        print("Document saved!")
+
+    except Exception as e:
+        conn.rollback()
+        print("DATABASE ERROR:", e)
+        raise

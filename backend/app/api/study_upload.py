@@ -1,49 +1,62 @@
 from fastapi import APIRouter, UploadFile, File
-from pathlib import Path
-import shutil
-
 from app.db import cursor, conn
+from supabase import create_client, Client
+import os
 
 router = APIRouter()
 
-STUDY_DIR = Path("study_uploads")
-STUDY_DIR.mkdir(exist_ok=True)
+# =========================
+# SUPABASE CONFIG
+# =========================
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+BUCKET_NAME = "study-docs"
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 # =========================
 # SAVE TO POSTGRES
 # =========================
-def save_study_document(filename: str, file_path: str):
+def save_study_document(filename: str, file_url: str):
 
     cursor.execute("""
-        INSERT INTO study_documents (filename, file_path)
+        INSERT INTO study_documents (filename, file_url)
         VALUES (%s, %s)
         ON CONFLICT (filename) DO NOTHING
-    """, (filename, file_path))
+    """, (filename, file_url))
 
     conn.commit()
 
 
 # =========================
-# UPLOAD PDF
+# UPLOAD PDF (SUPABASE + POSTGRES)
 # =========================
 @router.post("/study-upload")
 async def upload_study_pdf(file: UploadFile = File(...)):
 
-    file_path = STUDY_DIR / file.filename
+    file_name = file.filename
+    file_bytes = await file.read()
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # 1. Upload to Supabase Storage
+    supabase.storage.from_(BUCKET_NAME).upload(
+        file_name,
+        file_bytes,
+        {
+            "content-type": file.content_type
+        }
+    )
 
-    file_path_str = str(file_path)
+    # 2. Get public URL
+    file_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)
 
-    # SAVE TO POSTGRES
-    save_study_document(file.filename, file_path_str)
+    # 3. Save metadata in Render Postgres
+    save_study_document(file_name, file_url)
 
     return {
-        "filename": file.filename,
-        "file_url": f"/study_uploads/{file.filename}",
-        "status": "saved"
+        "filename": file_name,
+        "file_url": file_url,
+        "status": "uploaded"
     }
 
 
@@ -54,7 +67,7 @@ async def upload_study_pdf(file: UploadFile = File(...)):
 async def get_study_uploaded_pdfs():
 
     cursor.execute("""
-        SELECT filename, file_path
+        SELECT filename, file_url
         FROM study_documents
         ORDER BY id DESC
     """)
@@ -64,8 +77,7 @@ async def get_study_uploaded_pdfs():
     pdfs = [
         {
             "name": row[0],
-            "url": f"/study_uploads/{row[0]}",
-            "path": row[1]
+            "url": row[1]
         }
         for row in rows
     ]
@@ -74,19 +86,16 @@ async def get_study_uploaded_pdfs():
 
 
 # =========================
-# DELETE PDF
+# DELETE PDF (SUPABASE + POSTGRES)
 # =========================
 @router.delete("/study-upload/{filename}")
 async def delete_study_pdf(filename: str):
 
     try:
-        # DELETE FILE
-        file_path = STUDY_DIR / filename
+        # 1. Delete from Supabase Storage
+        supabase.storage.from_(BUCKET_NAME).remove([filename])
 
-        if file_path.exists():
-            file_path.unlink()
-
-        # DELETE FROM DB
+        # 2. Delete from Postgres
         cursor.execute("""
             DELETE FROM study_documents
             WHERE filename = %s

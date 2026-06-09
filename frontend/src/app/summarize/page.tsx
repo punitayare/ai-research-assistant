@@ -11,8 +11,8 @@ import {
   Loader2,
   Sparkles,
   UploadCloud,
+  Trash2,
 } from "lucide-react";
-
 import {
   useEffect,
   useState,
@@ -143,7 +143,40 @@ export default function StudyPage() {
     }
   };
 
+  const handleDeletePDF = async (
+  filename: string,
+  e: React.MouseEvent
+) => {
+  e.stopPropagation();
+
+  const confirmed = window.confirm(
+    `Delete "${filename}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await axios.delete(
+      `http://127.0.0.1:8000/study-upload/${encodeURIComponent(
+        filename
+      )}`
+    );
+
+    if (selectedPDF === filename) {
+      setSelectedPDF("");
+      setSummary("");
+      setFlashcards([]);
+      setActiveCard(null);
+    }
+
+    fetchPDFs();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
   // SELECT PDF ONLY
+
 
   const handleSelectPDF = (
     pdfName: string
@@ -340,51 +373,57 @@ export default function StudyPage() {
 
           <div className="space-y-3">
 
-            {pdfs.map((pdf, index) => (
+          {pdfs.map((pdf, index) => (
+  <div
+    key={index}
+    onClick={() =>
+      handleSelectPDF(pdf.name)
+    }
+    className={`w-full p-4 rounded-2xl border transition-all cursor-pointer ${
+      selectedPDF === pdf.name
+        ? "border-violet-500 bg-violet-500/10"
+        : "border-white/10 bg-white/5 hover:bg-white/10"
+    }`}
+  >
+    <div className="flex items-center justify-between">
 
-              <button
-                key={index}
-                onClick={() =>
-                  handleSelectPDF(
-                    pdf.name
-                  )
-                }
-                className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                  selectedPDF ===
-                  pdf.name
-                    ? "border-violet-500 bg-violet-500/10"
-                    : "border-white/10 bg-white/5 hover:bg-white/10"
-                }`}
-              >
+      <div className="flex items-center gap-3">
 
-                <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-violet-500/20 flex items-center justify-center">
+          <BookOpen
+            size={20}
+            className="text-violet-400"
+          />
+        </div>
 
-                  <div className="w-11 h-11 rounded-xl bg-violet-500/20 flex items-center justify-center">
+        <div>
+          <p className="font-medium truncate max-w-[180px]">
+            {pdf.name}
+          </p>
 
-                    <BookOpen
-                      size={20}
-                      className="text-violet-400"
-                    />
+          <p className="text-sm text-gray-500">
+            Research Paper
+          </p>
+        </div>
 
-                  </div>
+      </div>
 
-                  <div>
+      <button
+        onClick={(e) =>
+          handleDeletePDF(
+            pdf.name,
+            e
+          )
+        }
+        className="p-2 rounded-lg hover:bg-red-500/20 text-red-400 transition"
+        title="Delete PDF"
+      >
+        <Trash2 size={18} />
+      </button>
 
-                    <p className="font-medium truncate max-w-[180px]">
-                      {pdf.name}
-                    </p>
-
-                    <p className="text-sm text-gray-500">
-                      Research Paper
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </button>
-
-            ))}
+    </div>
+  </div>
+))}
 
           </div>
 

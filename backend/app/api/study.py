@@ -1,46 +1,59 @@
-
 from fastapi import APIRouter
-from pathlib import Path
 from pydantic import BaseModel
 import json
-
-from app.rag.pdf_parser import (
-    extract_text_from_pdf,
-)
-
-from app.api.summarizer import (
-    generate_summary,
-)
-
-from app.api.flashcards import (
-    generate_flashcards,
-)
+import os
+import requests
+from supabase import create_client, Client
+import tempfile
+from app.api.rag_upload import extract_text_from_pdf
+from app.api.summarizer import generate_summary
+from app.api.flashcards import generate_flashcards
 
 router = APIRouter()
 
-STUDY_DIR = Path("study_uploads")
+# =========================
+# SUPABASE CONFIG
+# =========================
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+BUCKET_NAME = "study-docs"
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 # =========================
 # REQUEST MODELS
 # =========================
 
-class SummaryRequest(
-    BaseModel
-):
-
+class SummaryRequest(BaseModel):
     filename: str
-
     language: str
 
 
-class FlashcardRequest(
-    BaseModel
-):
-
+class FlashcardRequest(BaseModel):
     filename: str
-
     language: str
+
+
+# =========================
+# DOWNLOAD FROM SUPABASE
+# =========================
+
+
+
+def get_pdf_text_from_supabase(filename: str):
+
+    file_bytes = supabase.storage.from_(BUCKET_NAME).download(filename)
+
+    # ✅ cross-platform temp file path
+    temp_dir = tempfile.gettempdir()
+    safe_filename = filename.replace(" ", "_")
+    local_path = os.path.join(temp_dir, safe_filename)
+
+    with open(local_path, "wb") as f:
+        f.write(file_bytes)
+
+    return local_path
 
 
 # =========================
@@ -48,60 +61,34 @@ class FlashcardRequest(
 # =========================
 
 @router.post("/summarize")
-async def summarize_pdf(
-    request: SummaryRequest
-):
+async def summarize_pdf(request: SummaryRequest):
 
-    file_path = (
-        STUDY_DIR
-        / request.filename
-    )
+    file_path = get_pdf_text_from_supabase(request.filename)
 
-    print(
-        "\nSUMMARY REQUEST:"
-    )
+    print("\nSUMMARY REQUEST:")
+    print("Filename:", request.filename)
+    print("Language:", request.language)
+    print("Path:", file_path)
 
-    print(
-        "Filename:",
-        request.filename
-    )
+    try:
 
-    print(
-        "Language:",
-        request.language
-    )
+        text = extract_text_from_pdf(file_path)
 
-    print(
-        "Path:",
-        file_path
-    )
+        print("\nTEXT EXTRACTED")
+        print(text[:500])
 
-    if not file_path.exists():
+        summary = generate_summary(text, request.language)
 
         return {
-            "summary":
-            f"PDF not found: "
-            f"{request.filename}"
+            "summary": summary
         }
 
-    text = extract_text_from_pdf(
-        str(file_path)
-    )
+    except Exception as e:
 
-    print(
-        "\nTEXT EXTRACTED"
-    )
-
-    print(text[:500])
-
-    summary = generate_summary(
-        text,
-        request.language,
-    )
-
-    return {
-        "summary": summary
-    }
+        return {
+            "summary": "",
+            "error": str(e)
+        }
 
 
 # =========================
@@ -109,95 +96,41 @@ async def summarize_pdf(
 # =========================
 
 @router.post("/flashcards")
-async def flashcards_pdf(
-    request: FlashcardRequest
-):
+async def flashcards_pdf(request: FlashcardRequest):
 
-    file_path = (
-        STUDY_DIR
-        / request.filename
-    )
+    file_path = get_pdf_text_from_supabase(request.filename)
 
-    print(
-        "\nFLASHCARD REQUEST:"
-    )
-
-    print(
-        "Filename:",
-        request.filename
-    )
-
-    print(
-        "Language:",
-        request.language
-    )
-
-    if not file_path.exists():
-
-        return {
-            "flashcards": []
-        }
-
-    text = extract_text_from_pdf(
-        str(file_path)
-    )
-
-    flashcards_raw = (
-        generate_flashcards(
-            text,
-            request.language,
-        )
-    )
+    print("\nFLASHCARD REQUEST:")
+    print("Filename:", request.filename)
+    print("Language:", request.language)
 
     try:
 
+        text = extract_text_from_pdf(file_path)
+
+        flashcards_raw = generate_flashcards(text, request.language)
+
         # STRING JSON → PYTHON
+        if isinstance(flashcards_raw, str):
+            flashcards_raw = json.loads(flashcards_raw)
 
-        if isinstance(
-            flashcards_raw,
-            str
-        ):
-
-            flashcards_raw = (
-                json.loads(
-                    flashcards_raw
-                )
-            )
-
-        # EXTRACT ARRAY
-
-        if isinstance(
-            flashcards_raw,
-            dict
-        ):
-
-            flashcards = (
-                flashcards_raw.get(
-                    "flashcards",
-                    [],
-                )
-            )
-
+        # EXTRACT ARRAY (KEEP SAME FORMAT AS YOUR ORIGINAL)
+        if isinstance(flashcards_raw, dict):
+            flashcards = flashcards_raw.get("flashcards", [])
         else:
-
             flashcards = []
 
         return {
-            "flashcards":
-            flashcards
+            "flashcards": flashcards
         }
 
     except Exception as e:
 
-        print(
-            "\nFLASHCARD ERROR:"
-        )
-
+        print("\nFLASHCARD ERROR:")
         print(str(e))
 
         return {
             "flashcards": [],
             "error": str(e),
-            "raw": flashcards_raw,
+            "raw": flashcards_raw if "flashcards_raw" in locals() else None
         }
-
