@@ -13,6 +13,9 @@ export default function Page() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // ---------------------------
+  // FETCH PDFs
+  // ---------------------------
   useEffect(() => {
     async function loadDocuments() {
       try {
@@ -21,7 +24,9 @@ export default function Page() {
         );
 
         const data = await response.json();
-        const pdfNames = data.pdfs.map((pdf: { name: string }) => pdf.name);
+
+        const pdfNames =
+          (data.pdfs || []).map((pdf: { name: string }) => pdf.name);
 
         setDocuments(pdfNames);
 
@@ -36,6 +41,9 @@ export default function Page() {
     loadDocuments();
   }, []);
 
+  // ---------------------------
+  // GENERATE MIND MAP
+  // ---------------------------
   async function generateMindMap() {
     if (!selectedDocument) {
       alert("Please select a document");
@@ -49,7 +57,9 @@ export default function Page() {
         "https://ai-research-assistant-production-0ae1.up.railway.app/api/mindmap",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             document_name: selectedDocument,
           }),
@@ -61,10 +71,11 @@ export default function Page() {
       }
 
       const data = await response.json();
+
       const graph = buildMindMap(data);
 
-      setNodes(graph.nodes);
-      setEdges(graph.edges);
+      setNodes(graph.nodes || []);
+      setEdges(graph.edges || []);
     } catch (error) {
       console.error("Failed to generate mindmap:", error);
     } finally {
@@ -72,13 +83,15 @@ export default function Page() {
     }
   }
 
+  // ---------------------------
+  // UI
+  // ---------------------------
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-[#0f0a1f] via-[#17102e] to-[#0b0718] text-white">
 
       {/* HEADER */}
-      <div className="px-4 md:px-8 py-4 md:py-5 border-b border-purple-900/40 bg-black/20 backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="px-6 py-4 md:px-8 md:py-5 border-b border-purple-900/40 bg-black/20 backdrop-blur-md flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
 
-        {/* TITLE */}
         <div>
           <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-purple-400 bg-clip-text text-transparent">
             AI Mind Map
@@ -90,24 +103,28 @@ export default function Page() {
         </div>
 
         {/* CONTROLS */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full md:w-auto">
+        <div className="flex flex-col md:flex-row gap-3 md:items-center">
 
           <select
             value={selectedDocument}
             onChange={(e) => setSelectedDocument(e.target.value)}
-            className="w-full sm:min-w-[260px] bg-[#1f1638] border border-purple-700/40 rounded-xl px-4 py-2 text-white outline-none focus:ring-2 focus:ring-violet-500"
+            className="min-w-[220px] bg-[#1f1638] border border-purple-700/40 rounded-xl px-4 py-2 text-white outline-none focus:ring-2 focus:ring-violet-500"
           >
-            {documents.map((doc) => (
-              <option key={doc} value={doc}>
-                {doc}
-              </option>
-            ))}
+            {documents.length === 0 ? (
+              <option>No PDFs found</option>
+            ) : (
+              documents.map((doc) => (
+                <option key={doc} value={doc}>
+                  {doc}
+                </option>
+              ))
+            )}
           </select>
 
           <button
             onClick={generateMindMap}
             disabled={loading}
-            className="w-full sm:w-auto px-5 py-2 rounded-xl font-medium bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 transition-all shadow-lg shadow-purple-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2 rounded-xl font-medium bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 transition disabled:opacity-50"
           >
             {loading ? "Generating..." : "Generate Mind Map"}
           </button>
@@ -115,42 +132,44 @@ export default function Page() {
         </div>
       </div>
 
-      {/* CONTENT */}
-      <div className="flex-1 overflow-hidden">
+      {/* CONTENT AREA (FIXED HEIGHT IMPORTANT) */}
+      <div className="flex-1 relative overflow-hidden h-[calc(100vh-80px)]">
 
+        {/* LOADING */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-full gap-5 px-4 text-center">
-
-            <div className="h-12 w-12 md:h-14 md:w-14 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-
-            <p className="text-purple-300 text-sm md:text-lg">
+          <div className="flex flex-col items-center justify-center h-full gap-5">
+            <div className="h-14 w-14 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-purple-300 text-lg">
               Building your mind map...
             </p>
-
           </div>
 
         ) : nodes.length > 0 ? (
-          <div className="h-full w-full overflow-auto touch-pan-x touch-pan-y">
+
+          /* MINDMAP WRAPPER (IMPORTANT FIX) */
+          <div className="w-full h-full">
             <MindMap nodes={nodes} edges={edges} />
           </div>
+
         ) : (
-          <div className="flex h-full items-center justify-center px-4 text-center">
+
+          /* EMPTY STATE */
+          <div className="flex h-full items-center justify-center text-center px-4">
 
             <div>
+              <div className="text-7xl md:text-8xl mb-6">🧠</div>
 
-              <div className="text-6xl md:text-8xl mb-6">🧠</div>
-
-              <h2 className="text-xl md:text-3xl font-semibold">
+              <h2 className="text-2xl md:text-3xl font-semibold">
                 Generate a Research Mind Map
               </h2>
 
               <p className="text-purple-300 mt-3 text-sm md:text-lg max-w-md mx-auto">
                 Select an uploaded PDF and create an interactive visual representation of its content.
               </p>
-
             </div>
 
           </div>
+
         )}
 
       </div>

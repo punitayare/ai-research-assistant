@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
-
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -37,9 +36,10 @@ export default function UploadPage() {
       const res = await axios.get(
         "https://ai-research-assistant-production-0ae1.up.railway.app/uploaded-pdfs"
       );
+
       setUploadedFiles(res.data.pdfs || []);
     } catch (err) {
-      console.error("Failed to load PDFs:", err);
+      console.error(err);
       setUploadedFiles([]);
     }
   };
@@ -48,16 +48,16 @@ export default function UploadPage() {
     setProcessingDone(false);
 
     const steps = [
-      "Extracting text from PDF...",
-      "Chunking document into sections...",
+      "Extracting text...",
+      "Chunking document...",
       "Generating embeddings...",
-      "Storing vectors in ChromaDB...",
-      "PDF processed successfully",
+      "Storing vectors...",
+      "Completed",
     ];
 
     for (let i = 0; i < steps.length; i++) {
       setProcessingStep(steps[i]);
-      await new Promise((r) => setTimeout(r, 1200));
+      await new Promise((r) => setTimeout(r, 1000));
     }
 
     setProcessingDone(true);
@@ -72,22 +72,18 @@ export default function UploadPage() {
 
     try {
       setUploading(true);
-      simulateProcessingSteps();
 
-      const response = await axios.post(
+      simulateProcessingSteps(); // don’t await (UI bug fix)
+
+      await axios.post(
         "https://ai-research-assistant-production-0ae1.up.railway.app/upload",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      const newFile: UploadedFile = {
-        name: response.data.filename,
-        url: response.data.file_url,
-      };
-
-      setUploadedFiles((prev) => [newFile, ...prev]);
-    } catch (error) {
-      console.error(error);
+      await fetchUploadedPdfs();
+    } catch (err) {
+      console.error(err);
     } finally {
       setUploading(false);
     }
@@ -100,57 +96,47 @@ export default function UploadPage() {
       );
 
       setUploadedFiles((prev) =>
-        prev.filter((file) => file.name !== filename)
+        prev.filter((f) => f.name !== filename)
       );
     } catch (err) {
-      console.error("Delete failed:", err);
+      console.error(err);
     }
   };
 
   return (
-    <main className="min-h-screen bg-black text-white px-4 md:px-6 py-10 md:py-16">
-
+    <main className="min-h-screen bg-black text-white px-6 py-16">
       <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
-
+        <div className="flex items-center justify-between mb-10">
           <div>
-            <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-3">
+            <h1 className="text-4xl font-bold">
               AI Research Assistant
             </h1>
-
-            <p className="text-gray-400 text-sm md:text-lg">
-              Upload PDFs, build embeddings, and chat with your documents.
+            <p className="text-gray-400">
+              Upload PDFs and chat with them
             </p>
           </div>
 
           <button
             onClick={() => router.push("/chat")}
-            className="w-full md:w-auto flex items-center justify-center gap-3 bg-violet-600 hover:bg-violet-500 transition px-5 md:px-6 py-3 md:py-4 rounded-2xl font-medium"
+            className="bg-violet-600 px-5 py-3 rounded-2xl flex gap-2 items-center"
           >
-            <MessageSquare size={20} />
+            <MessageSquare size={18} />
             Open Chat
           </button>
         </div>
 
-        {/* UPLOAD BOX */}
+        {/* UPLOAD */}
         <div
           onClick={() => inputRef.current?.click()}
-          className="border-2 border-dashed border-white/10 hover:border-violet-500 transition rounded-3xl bg-white/5 backdrop-blur-xl p-8 md:p-16 flex flex-col items-center justify-center text-center cursor-pointer"
+          className="border border-dashed border-white/10 p-16 rounded-3xl text-center cursor-pointer"
         >
-          <UploadCloud
-            size={50}
-            className="md:size-[70px] text-violet-400 mb-4 md:mb-6"
-          />
+          <UploadCloud className="mx-auto text-violet-400 mb-4" size={50} />
 
-          <h2 className="text-xl md:text-3xl font-semibold mb-2 md:mb-3">
-            {uploading ? "Processing PDF..." : "Upload Research PDF"}
+          <h2 className="text-2xl">
+            {uploading ? "Uploading..." : "Upload PDF"}
           </h2>
-
-          <p className="text-gray-500 text-sm md:text-base">
-            Click to browse files
-          </p>
 
           <input
             ref={inputRef}
@@ -161,130 +147,48 @@ export default function UploadPage() {
           />
         </div>
 
-        {/* PROCESSING STATUS */}
-        {(uploading || processingDone) && (
-          <div className="mt-10 bg-white/5 border border-white/10 rounded-3xl p-5 md:p-8">
-
-            <div className="flex items-start md:items-center gap-4">
-
+        {/* STATUS */}
+        {processingStep && (
+          <div className="mt-8 p-6 bg-white/5 rounded-2xl border border-white/10">
+            <div className="flex items-center gap-3">
               {processingDone ? (
-                <CheckCircle2 className="text-green-400" size={28} />
+                <CheckCircle2 className="text-green-400" />
               ) : (
-                <Loader2 className="animate-spin text-violet-400" size={28} />
+                <Loader2 className="animate-spin text-violet-400" />
               )}
-
-              <div>
-                <h3 className="text-lg md:text-xl font-semibold">
-                  PDF Processing Pipeline
-                </h3>
-
-                <p className="text-gray-400 text-sm md:text-base mt-1">
-                  {processingStep}
-                </p>
-              </div>
+              <p>{processingStep}</p>
             </div>
-
-            {/* STEPS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 md:mt-8">
-
-              {[
-                "Text Extraction",
-                "Chunking",
-                "Embeddings",
-                "Vector Storage",
-              ].map((step, index) => (
-                <div
-                  key={index}
-                  className="bg-black/40 border border-white/10 rounded-2xl p-4 md:p-5"
-                >
-                  <div className="flex items-center gap-3">
-
-                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-violet-500/20 flex items-center justify-center text-sm">
-                      {index + 1}
-                    </div>
-
-                    <h4 className="text-sm md:text-base font-medium">
-                      {step}
-                    </h4>
-
-                  </div>
-                </div>
-              ))}
-            </div>
-
           </div>
         )}
 
-        {/* PDF LIST */}
-        <div className="mt-12 md:mt-14">
+        {/* FILE LIST */}
+        <div className="mt-10 grid md:grid-cols-2 gap-4">
+          {uploadedFiles.map((file, i) => (
+            <div
+              key={i}
+              className="p-5 bg-white/5 border border-white/10 rounded-2xl flex justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="text-violet-400" />
+                <span className="truncate max-w-[200px]">
+                  {file.name}
+                </span>
+              </div>
 
-          <h2 className="text-xl md:text-2xl font-semibold mb-5 md:mb-6">
-            Uploaded Papers ({uploadedFiles.length})
-          </h2>
+              <div className="flex gap-3">
+                <a href={file.url} target="_blank">
+                  <ExternalLink />
+                </a>
 
-          {uploadedFiles.length === 0 ? (
-            <div className="text-gray-500 text-sm md:text-base">
-              No PDFs uploaded yet.
+                <button onClick={() => handleDelete(file.name)}>
+                  <Trash2 className="text-red-400" />
+                </button>
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-
-              {uploadedFiles.map((file, index) => (
-                <div
-                  key={index}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 hover:border-violet-500 transition"
-                >
-                  <div className="flex items-center justify-between gap-3">
-
-                    <div className="flex items-center gap-3 md:gap-4 min-w-0">
-
-                      <div className="p-2 md:p-3 rounded-xl bg-violet-500/20">
-                        <FileText className="text-violet-400" />
-                      </div>
-
-                      <div className="min-w-0">
-                        <h3 className="font-medium text-sm md:text-lg truncate max-w-[180px] md:max-w-[220px]">
-                          {file.name}
-                        </h3>
-
-                        <p className="text-xs md:text-sm text-gray-500">
-                          Research PDF
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <div className="flex items-center gap-2 md:gap-3">
-
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 md:p-3 rounded-xl bg-white/10 hover:bg-violet-500/20 transition"
-                      >
-                        <ExternalLink size={16} />
-                      </a>
-
-                      <button
-                        onClick={() => handleDelete(file.name)}
-                        className="p-2 md:p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 transition"
-                      >
-                        <Trash2 size={16} className="text-red-400" />
-                      </button>
-
-                    </div>
-
-                  </div>
-                </div>
-              ))}
-
-            </div>
-          )}
-
+          ))}
         </div>
 
       </div>
-
     </main>
   );
 }
