@@ -51,3 +51,4 @@ langchain-text-splitters==0.3.9
 # =========================
 pydantic==2.11.7
 starlette==0.47.2
+supabase==0.0.3
