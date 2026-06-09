@@ -1,6 +1,8 @@
+
 "use client";
 
 import axios from "axios";
+
 import {
   UploadCloud,
   FileText,
@@ -10,7 +12,13 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import { useRouter } from "next/navigation";
 
 interface UploadedFile {
@@ -19,124 +27,228 @@ interface UploadedFile {
 }
 
 export default function UploadPage() {
-  const router = useRouter();
-  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const [uploading, setUploading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [processingStep, setProcessingStep] = useState("");
-  const [processingDone, setProcessingDone] = useState(false);
+  const router = useRouter();
+
+  const inputRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const [uploading, setUploading] =
+    useState(false);
+
+  const [uploadedFiles, setUploadedFiles] =
+    useState<UploadedFile[]>([]);
+
+  const [processingStep, setProcessingStep] =
+    useState("");
+
+  const [processingDone, setProcessingDone] =
+    useState(false);
 
   useEffect(() => {
     fetchUploadedPdfs();
   }, []);
 
   const fetchUploadedPdfs = async () => {
+
     try {
+
       const res = await axios.get(
         "https://ai-research-assistant-production-0ae1.up.railway.app/uploaded-pdfs"
       );
 
-      setUploadedFiles(res.data.pdfs || []);
+      setUploadedFiles(
+        res.data.pdfs || []
+      );
+
     } catch (err) {
-      console.error(err);
+
+      console.error(
+        "Failed to load PDFs:",
+        err
+      );
+
       setUploadedFiles([]);
+
     }
   };
 
   const simulateProcessingSteps = async () => {
+
     setProcessingDone(false);
 
-    const steps = [
-      "Extracting text...",
-      "Chunking document...",
-      "Generating embeddings...",
-      "Storing vectors...",
-      "Completed",
-    ];
+    setProcessingStep(
+      "Extracting text from PDF..."
+    );
 
-    for (let i = 0; i < steps.length; i++) {
-      setProcessingStep(steps[i]);
-      await new Promise((r) => setTimeout(r, 1000));
-    }
+    await new Promise(
+      (r) => setTimeout(r, 1500)
+    );
+
+    setProcessingStep(
+      "Chunking document into sections..."
+    );
+
+    await new Promise(
+      (r) => setTimeout(r, 1500)
+    );
+
+    setProcessingStep(
+      "Generating embeddings..."
+    );
+
+    await new Promise(
+      (r) => setTimeout(r, 2000)
+    );
+
+    setProcessingStep(
+      "Storing vectors in ChromaDB..."
+    );
+
+    await new Promise(
+      (r) => setTimeout(r, 1500)
+    );
+
+    setProcessingStep(
+      "PDF processed successfully"
+    );
 
     setProcessingDone(true);
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+
     const file = e.target.files?.[0];
+
     if (!file) return;
 
     const formData = new FormData();
+
     formData.append("file", file);
 
     try {
+
       setUploading(true);
 
-      simulateProcessingSteps(); // don’t await (UI bug fix)
+      simulateProcessingSteps();
 
-      await axios.post(
+      const response = await axios.post(
         "https://ai-research-assistant-production-0ae1.up.railway.app/upload",
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        {
+          headers: {
+            "Content-Type":
+              "multipart/form-data",
+          },
+        }
       );
 
-      await fetchUploadedPdfs();
-    } catch (err) {
-      console.error(err);
+      const newFile: UploadedFile = {
+        name: response.data.filename,
+        url: response.data.file_url,
+      };
+
+      setUploadedFiles(
+        (prev) => [newFile, ...prev]
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
     } finally {
+
       setUploading(false);
+
     }
   };
 
-  const handleDelete = async (filename: string) => {
+  const handleDelete = async (
+    filename: string
+  ) => {
+
     try {
+
       await axios.delete(
         `https://ai-research-assistant-production-0ae1.up.railway.app/delete-pdf/${filename}`
       );
 
       setUploadedFiles((prev) =>
-        prev.filter((f) => f.name !== filename)
+        prev.filter(
+          (file) => file.name !== filename
+        )
       );
+
     } catch (err) {
-      console.error(err);
+
+      console.error(
+        "Delete failed:",
+        err
+      );
+
     }
   };
 
   return (
     <main className="min-h-screen bg-black text-white px-6 py-16">
+
       <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}
+
         <div className="flex items-center justify-between mb-10">
+
           <div>
-            <h1 className="text-4xl font-bold">
+
+            <h1 className="text-5xl font-bold mb-3">
               AI Research Assistant
             </h1>
-            <p className="text-gray-400">
-              Upload PDFs and chat with them
+
+            <p className="text-gray-400 text-lg">
+              Upload PDFs, build embeddings,
+              and chat with your documents.
             </p>
+
           </div>
+
+          {/* CHAT BUTTON */}
 
           <button
             onClick={() => router.push("/chat")}
-            className="bg-violet-600 px-5 py-3 rounded-2xl flex gap-2 items-center"
+            className="flex items-center gap-3 bg-violet-600 hover:bg-violet-500 transition px-6 py-4 rounded-2xl font-medium"
           >
-            <MessageSquare size={18} />
+            <MessageSquare size={22} />
+
             Open Chat
           </button>
+
         </div>
 
-        {/* UPLOAD */}
+        {/* UPLOAD BOX */}
+
         <div
           onClick={() => inputRef.current?.click()}
-          className="border border-dashed border-white/10 p-16 rounded-3xl text-center cursor-pointer"
+          className="border-2 border-dashed border-white/10 hover:border-violet-500 transition-all rounded-3xl bg-white/5 backdrop-blur-xl p-16 flex flex-col items-center justify-center text-center cursor-pointer"
         >
-          <UploadCloud className="mx-auto text-violet-400 mb-4" size={50} />
 
-          <h2 className="text-2xl">
-            {uploading ? "Uploading..." : "Upload PDF"}
+          <UploadCloud
+            size={70}
+            className="text-violet-400 mb-6"
+          />
+
+          <h2 className="text-3xl font-semibold mb-3">
+
+            {uploading
+              ? "Processing PDF..."
+              : "Upload Research PDF"}
+
           </h2>
+
+          <p className="text-gray-500">
+            Click to browse files
+          </p>
 
           <input
             ref={inputRef}
@@ -145,50 +257,200 @@ export default function UploadPage() {
             onChange={handleUpload}
             className="hidden"
           />
+
         </div>
 
-        {/* STATUS */}
-        {processingStep && (
-          <div className="mt-8 p-6 bg-white/5 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-3">
+        {/* PROCESSING STATUS */}
+
+        {(uploading || processingDone) && (
+
+          <div className="mt-10 bg-white/5 border border-white/10 rounded-3xl p-8">
+
+            <div className="flex items-center gap-4">
+
               {processingDone ? (
-                <CheckCircle2 className="text-green-400" />
+
+                <CheckCircle2
+                  className="text-green-400"
+                  size={30}
+                />
+
               ) : (
-                <Loader2 className="animate-spin text-violet-400" />
+
+                <Loader2
+                  className="animate-spin text-violet-400"
+                  size={30}
+                />
+
               )}
-              <p>{processingStep}</p>
+
+              <div>
+
+                <h3 className="text-xl font-semibold">
+                  PDF Processing Pipeline
+                </h3>
+
+                <p className="text-gray-400 mt-1">
+                  {processingStep}
+                </p>
+
+              </div>
+
             </div>
+
+            {/* STEPS */}
+
+            <div className="grid md:grid-cols-4 gap-4 mt-8">
+
+              {[
+                "Text Extraction",
+                "Chunking",
+                "Embeddings",
+                "Vector Storage",
+              ].map((step, index) => (
+
+                <div
+                  key={index}
+                  className="bg-black/40 border border-white/10 rounded-2xl p-5"
+                >
+
+                  <div className="flex items-center gap-3">
+
+                    <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+
+                      {index + 1}
+
+                    </div>
+
+                    <div>
+
+                      <h4 className="font-medium">
+                        {step}
+                      </h4>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
           </div>
+
         )}
 
-        {/* FILE LIST */}
-        <div className="mt-10 grid md:grid-cols-2 gap-4">
-          {uploadedFiles.map((file, i) => (
-            <div
-              key={i}
-              className="p-5 bg-white/5 border border-white/10 rounded-2xl flex justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <FileText className="text-violet-400" />
-                <span className="truncate max-w-[200px]">
-                  {file.name}
-                </span>
-              </div>
+        {/* PDF LIST */}
 
-              <div className="flex gap-3">
-                <a href={file.url} target="_blank">
-                  <ExternalLink />
-                </a>
+        <div className="mt-14">
 
-                <button onClick={() => handleDelete(file.name)}>
-                  <Trash2 className="text-red-400" />
-                </button>
-              </div>
+          <h2 className="text-2xl font-semibold mb-6">
+
+            Uploaded Papers
+            ({uploadedFiles.length})
+
+          </h2>
+
+          {uploadedFiles.length === 0 ? (
+
+            <div className="text-gray-500">
+              No PDFs uploaded yet.
             </div>
-          ))}
+
+          ) : (
+
+            <div className="grid md:grid-cols-2 gap-5">
+
+              {uploadedFiles.map(
+                (file, index) => (
+
+                  <div
+                    key={index}
+                    className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-violet-500 transition"
+                  >
+
+                    <div className="flex items-center justify-between">
+
+                      <div className="flex items-center gap-4">
+
+                        <div className="p-3 rounded-xl bg-violet-500/20">
+
+                          <FileText className="text-violet-400" />
+
+                        </div>
+
+                        <div>
+
+                          <h3 className="font-medium text-lg truncate max-w-[220px]">
+
+                            {file.name}
+
+                          </h3>
+
+                          <p className="text-sm text-gray-500">
+
+                            Research PDF
+
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                      <div className="flex items-center gap-3">
+
+                        {/* OPEN PDF */}
+
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-3 rounded-xl bg-white/10 hover:bg-violet-500/20 transition"
+                        >
+
+                          <ExternalLink size={18} />
+
+                        </a>
+
+                        {/* DELETE */}
+
+                        <button
+                          onClick={() =>
+                            handleDelete(
+                              file.name
+                            )
+                          }
+                          className="p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 transition"
+                        >
+
+                          <Trash2
+                            size={18}
+                            className="text-red-400"
+                          />
+
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          )}
+
         </div>
 
       </div>
+
     </main>
   );
+
+
 }
