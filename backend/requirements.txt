@@ -36,7 +36,7 @@ PyMuPDF==1.26.3
 # =========================
 # Database
 # =========================
-psycopg2-binary
+psycopg2-binary==2.9.10
 
 # =========================
 # LangChain ecosystem
@@ -51,4 +51,8 @@ langchain-text-splitters==0.3.9
 # =========================
 pydantic==2.11.7
 starlette==0.47.2
-supabase==0.0.3
+
+# =========================
+# Supabase
+# =========================
+supabase==2.18.1
