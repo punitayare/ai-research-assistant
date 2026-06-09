@@ -1,21 +1,20 @@
+print("RETRIEVER: START", flush=True)
 
 import chromadb
-import logging
 
-from app.rag.embeddings import (
-    embedding_model,
-)
-
-logger = logging.getLogger(__name__)
+print("RETRIEVER: CHROMADB IMPORTED", flush=True)
 
 client = chromadb.PersistentClient(
     path="chroma_db"
 )
 
+print("RETRIEVER: CLIENT CREATED", flush=True)
+
 collection = client.get_or_create_collection(
     name="research_papers"
 )
 
+print("RETRIEVER: COLLECTION CREATED", flush=True)
 
 def retrieve_relevant_chunks(
     query: str,

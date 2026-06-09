@@ -1,3 +1,4 @@
+print("rag_upload imported", flush=True)
 from fastapi import APIRouter, UploadFile, File, BackgroundTasks
 from fastapi import APIRouter, UploadFile, File, BackgroundTasks
 from pathlib import Path

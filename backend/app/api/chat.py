@@ -1,3 +1,4 @@
+print("CHAT ROUTER IMPORTED", flush=True)
 from fastapi import APIRouter
 from pydantic import BaseModel
 

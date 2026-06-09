@@ -1,19 +1,20 @@
+print("VECTOR_STORE: START", flush=True)
+
 import chromadb
-import logging
 
-from uuid import uuid4
-
-from app.db import conn, cursor
-
-logger = logging.getLogger(__name__)
+print("VECTOR_STORE: CHROMADB IMPORTED", flush=True)
 
 client = chromadb.PersistentClient(
     path="chroma_db"
 )
 
+print("VECTOR_STORE: CLIENT CREATED", flush=True)
+
 collection = client.get_or_create_collection(
     name="research_papers"
 )
+
+print("VECTOR_STORE: COLLECTION CREATED", flush=True)
 
 
 def store_chunks(

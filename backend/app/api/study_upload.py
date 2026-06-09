@@ -1,3 +1,4 @@
+print("study_upload imported", flush=True)
 from fastapi import APIRouter, UploadFile, File
 from app.db import cursor, conn
 from supabase import create_client, Client

@@ -1,3 +1,4 @@
+print("study imported", flush=True)
 from fastapi import APIRouter
 from pydantic import BaseModel
 import json
