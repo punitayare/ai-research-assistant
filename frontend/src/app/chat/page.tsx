@@ -216,143 +216,313 @@ if (selectedPdfs.length === 0) {
   ========================= */
 
   return (
-   <div className="min-h-screen bg-black text-white flex flex-col md:flex-row">
+   <main className="min-h-screen bg-black text-white flex flex-col md:flex-row">
 
-  {/* MOBILE PDF SELECTOR */}
-  <div className="md:hidden border-b border-white/10 bg-black/80 backdrop-blur-xl p-4 sticky top-0 z-50">
-    <button
-      onClick={() => setShowPdfs(!showPdfs)}
-      className="w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3"
-    >
-      <span className="font-medium">
-        PDFs ({selectedPdfs.length} selected)
-      </span>
+      {/* SIDEBAR */}
+      <aside className="w-[280px] border-r border-white/10 bg-white/5 backdrop-blur-xl p-6 hidden md:flex flex-col">
 
-      <ChevronDown
-        size={18}
-        className={`transition-transform duration-300 ${
-          showPdfs ? "rotate-180" : ""
-        }`}
-      />
-    </button>
+        <h1 className="text-2xl font-bold mb-8">
+          AI Research Assistant
+        </h1>
 
-    {showPdfs && (
-      <div className="mt-3 rounded-xl border border-white/10 bg-black max-h-64 overflow-y-auto">
-        {pdfs.map((pdf, i) => (
+        {/* CHAT LABEL */}
+        <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-4">
+          Research Chat
+        </div>
+
+        {/* PDF DROPDOWN */}
+        <div className="rounded-2xl border border-white/10 overflow-hidden">
+
+          <button
+            onClick={() =>
+              setShowPdfs(
+                !showPdfs
+              )
+            }
+            className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition"
+          >
+
+            <span>
+              Uploaded PDFs
+            </span>
+
+            <ChevronDown
+              size={18}
+              className={`transition ${
+                showPdfs
+                  ? "rotate-180"
+                  : ""
+              }`}
+            />
+          </button>
+
+          {showPdfs && (
+
+            <div className="border-t border-white/10 max-h-72 overflow-y-auto">
+
+              {pdfs.length === 0 ? (
+
+                <div className="p-4 text-sm text-gray-500">
+                  No PDFs uploaded
+                </div>
+
+              ) : (
+
+                pdfs.map(
+                  (pdf, i) => (
+
+                    <div
+                      key={i}
+                      onClick={() =>
+                        togglePdf(
+                          pdf.name
+                        )
+                      }
+                      className={`flex items-center gap-3 p-4 cursor-pointer border-b border-white/5 last:border-none transition ${
+                        selectedPdfs.includes(
+                          pdf.name
+                        )
+                          ? "bg-violet-500/20"
+                          : "hover:bg-white/5"
+                      }`}
+                    >
+
+                      <FileText
+                        size={18}
+                        className="text-violet-400"
+                      />
+
+                      <span className="text-sm truncate">
+                        {pdf.name}
+                      </span>
+
+                    </div>
+                  )
+                )
+
+              )}
+            </div>
+
+          )}
+        </div>
+
+        {/* SELECTED PDFs */}
+        {selectedPdfs.length >
+          0 && (
+
+          <div className="mt-4 text-xs text-gray-400">
+
+            Selected:
+            {" "}
+            {
+              selectedPdfs.length
+            }
+            {" "}
+            PDF(s)
+
+          </div>
+        )}
+      </aside>
+{/* MOBILE PDF SELECTOR */}
+<div className="md:hidden border-b border-white/10 bg-black/80 backdrop-blur-xl p-4 sticky top-0 z-50">
+
+  <button
+    onClick={() => setShowPdfs(!showPdfs)}
+    className="w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+  >
+    <span>
+      PDFs ({selectedPdfs.length} selected)
+    </span>
+
+    <ChevronDown
+      size={18}
+      className={`transition ${
+        showPdfs ? "rotate-180" : ""
+      }`}
+    />
+  </button>
+
+  {showPdfs && (
+    <div className="mt-3 rounded-xl border border-white/10 bg-white/5 max-h-64 overflow-y-auto">
+
+      {pdfs.length === 0 ? (
+        <div className="p-4 text-sm text-gray-400">
+          No PDFs uploaded
+        </div>
+      ) : (
+        pdfs.map((pdf, i) => (
           <div
             key={i}
             onClick={() => togglePdf(pdf.name)}
-            className={`p-3 border-b border-white/5 cursor-pointer transition ${
+            className={`flex items-center gap-3 p-4 border-b border-white/10 last:border-none cursor-pointer ${
               selectedPdfs.includes(pdf.name)
-                ? "bg-violet-500/20 text-violet-300"
+                ? "bg-violet-500/20"
                 : "hover:bg-white/5"
             }`}
           >
-            {pdf.name}
+            <FileText
+              size={18}
+              className="text-violet-400"
+            />
+
+            <span className="text-sm truncate flex-1">
+              {pdf.name}
+            </span>
           </div>
-        ))}
-      </div>
-    )}
-  </div>
-
-  {/* DESKTOP SIDEBAR */}
-  <aside className="hidden md:flex w-[280px] border-r border-white/10 bg-white/5 backdrop-blur-xl p-6 flex-col shrink-0">
-
-    <h2 className="text-xl font-bold mb-6">
-      PDFs
-    </h2>
-
-    <div className="flex-1 overflow-y-auto space-y-2">
-      {pdfs.map((pdf, i) => (
-        <button
-          key={i}
-          onClick={() => togglePdf(pdf.name)}
-          className={`w-full text-left p-3 rounded-xl transition ${
-            selectedPdfs.includes(pdf.name)
-              ? "bg-violet-500/20 border border-violet-500/40"
-              : "bg-white/5 hover:bg-white/10"
-          }`}
-        >
-          {pdf.name}
-        </button>
-      ))}
+        ))
+      )}
     </div>
-
-  </aside>
-
-  {/* MAIN CONTENT */}
-  <main className="flex-1 min-w-0 flex flex-col">
-
-    {/* HEADER */}
-    <div className="border-b border-white/10 p-4 md:p-6 backdrop-blur-xl bg-black/40 sticky top-0 md:static z-40">
-
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-        <div>
-          <h1 className="text-xl md:text-3xl font-bold">
-            PDF Workspace
-          </h1>
-
-          <p className="text-sm text-gray-400 mt-1">
-            Search, summarize and chat with selected PDFs
-          </p>
-        </div>
-
-        <button
-          className="w-full md:w-auto px-4 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 transition"
-        >
-          Upload PDF
-        </button>
-
-      </div>
-    </div>
-
-    {/* CONTENT */}
-    <div className="flex-1 overflow-y-auto p-4 md:p-8">
-
-      <div className="max-w-6xl mx-auto">
-
-        {/* SEARCH */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Ask anything..."
-            className="
-              w-full
-              rounded-2xl
-              bg-white/5
-              border
-              border-white/10
-              px-4
-              py-4
-              text-sm
-              md:text-base
-              outline-none
-              focus:border-violet-500
-            "
-          />
-        </div>
-
-        {/* RESULTS */}
-        <div className="
-          rounded-3xl
-          border
-          border-white/10
-          bg-white/5
-          backdrop-blur-xl
-          p-4
-          md:p-8
-          min-h-[400px]
-        ">
-          {/* Existing Result UI Here */}
-        </div>
-
-      </div>
-
-    </div>
-
-  </main>
-
+  )}
 </div>
+      {/* MAIN CHAT */}
+      <section className="flex-1 flex flex-col">
+
+        {/* HEADER */}
+        <div className="border-b border-white/10 p-4 md:p-6">
+
+          <h2 className="text-2xl font-semibold">
+            Research Chat
+          </h2>
+
+        </div>
+
+        {/* MESSAGES */}
+        <div className="flex-1 overflow-y-auto px-6 py-8 space-y-6">
+
+          {messages.map(
+            (
+              message,
+              index
+            ) => (
+
+              <div
+                key={index}
+                className={`max-w-4xl ${
+                  message.role ===
+                  "user"
+                    ? "ml-auto"
+                    : "mr-auto"
+                }`}
+              >
+
+                {/* MESSAGE */}
+                <div
+                  className={`rounded-3xl px-6 py-5 border ${
+                    message.role ===
+                    "user"
+                      ? "bg-violet-600 border-violet-500"
+                      : "bg-white/5 border-white/10"
+                  }`}
+                >
+
+                  <ReactMarkdown>
+                    {
+                      message.content
+                    }
+                  </ReactMarkdown>
+
+                </div>
+
+                {/* SOURCES */}
+                {message.sources &&
+                  message.sources
+                    .length > 0 && (
+
+                  <div className="mt-4 space-y-3">
+
+                    <p className="text-sm text-gray-400">
+                      Sources
+                    </p>
+
+                    {message.sources.map(
+                      (
+                        src,
+                        i
+                      ) => (
+
+                        <div
+                          key={i}
+                          className="p-4 rounded-2xl bg-white/5 border border-white/10"
+                        >
+
+                          <p className="text-sm text-gray-300 leading-relaxed">
+
+                            {src.content?.slice(
+                              0,
+                              300
+                            )}
+
+                            ...
+
+                          </p>
+
+                          <div className="mt-3 text-xs text-violet-300">
+
+                            PDF:
+                            {" "}
+                            {src.source}
+
+                          </div>
+
+                        </div>
+                      )
+                    )}
+                  </div>
+
+                )}
+              </div>
+            )
+          )}
+
+          {/* LOADING */}
+          {loading && (
+
+            <div className="mr-auto max-w-xl">
+
+              <div className="rounded-3xl px-6 py-5 bg-white/5 border border-white/10 animate-pulse">
+
+                Thinking...
+
+              </div>
+
+            </div>
+
+          )}
+        </div>
+
+        {/* INPUT */}
+        <div className="border-t border-white/10 p-6">
+
+          <div className="max-w-4xl mx-auto flex items-center gap-4">
+
+            <input
+              value={query}
+              onChange={(e) =>
+                setQuery(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleKeyDown
+              }
+              placeholder="Ask questions about selected PDFs..."
+              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-violet-500"
+            />
+
+            <button
+              onClick={
+                sendMessage
+              }
+              disabled={loading}
+              className="w-14 h-14 rounded-2xl bg-violet-600 hover:bg-violet-500 transition flex items-center justify-center disabled:opacity-50"
+            >
+
+              <Send size={20} />
+
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
