@@ -6,8 +6,7 @@ print("VECTOR_STORE: CHROMADB IMPORTED", flush=True)
 import logging
 from uuid import uuid4
 from app.db import get_connection
-conn = get_connection()
-cursor = conn.cursor()
+
 print("VECTOR_STORE: OTHER IMPORTS DONE", flush=True)
 
 try:
@@ -183,7 +182,8 @@ def save_document(filename, file_url):
         print("Saving document...")
         print(filename)
         print(file_url)
-
+        conn = get_connection()
+        cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO documents
             (filename, file_url)

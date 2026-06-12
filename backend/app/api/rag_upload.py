@@ -51,16 +51,24 @@ router = APIRouter()
 
 def process_pdf(file_path: str, filename: str):
     try:
+
         print("\n========== PDF PROCESS STARTED ==========")
 
         print("STEP 1")
         text = extract_text_from_pdf(file_path)
 
         print("STEP 2")
-        chunks = chunk_text(...)
+        chunks = chunk_text(
+            text=text,
+            source=filename
+        )
 
         print("STEP 3")
-        enriched_chunks = embedding_model.generate_embeddings(...)
+        enriched_chunks = (
+            embedding_model.generate_embeddings(
+                chunks
+            )
+        )
 
         print("STEP 4")
         store_chunks(enriched_chunks)
@@ -75,7 +83,6 @@ def process_pdf(file_path: str, filename: str):
         import traceback
         traceback.print_exc()
         print("ERROR:", str(e))
-
 
 @router.post("/upload")
 async def upload_pdf(
