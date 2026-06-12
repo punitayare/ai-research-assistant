@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 
 print("RAG: importing db", flush=True)
-from app.db import conn
+from app.db import get_connection
 
 print("RAG: db imported", flush=True)
 
@@ -120,27 +120,39 @@ async def upload_pdf(
 @router.get("/uploaded-pdfs")
 async def get_uploaded_pdfs():
 
-    cursor.execute("""
-        SELECT filename, file_url
-        FROM documents
-        ORDER BY uploaded_at DESC
-    """)
+    conn = get_connection()
 
-    rows = cursor.fetchall()
+    try:
 
-    return {
-        "pdfs": [
-            {
-                "name": row[0],
-                "url": row[1]
-            }
-            for row in rows
-        ]
-    }
+        with conn.cursor() as cursor:
+
+            cursor.execute("""
+                SELECT filename, file_url
+                FROM documents
+                ORDER BY uploaded_at DESC
+            """)
+
+            rows = cursor.fetchall()
+
+        return {
+            "pdfs": [
+                {
+                    "name": row[0],
+                    "url": row[1]
+                }
+                for row in rows
+            ]
+        }
+
+    finally:
+
+        conn.close()
 
 
 @router.delete("/delete-pdf/{filename}")
 async def delete_pdf(filename: str):
+
+    db_conn = get_connection()
 
     try:
 
@@ -157,12 +169,14 @@ async def delete_pdf(filename: str):
         if ids:
             collection.delete(ids=ids)
 
-        cursor.execute("""
-            DELETE FROM documents
-            WHERE filename = %s
-        """, (filename,))
+        with db_conn.cursor() as cursor:
 
-        conn.commit()
+            cursor.execute("""
+                DELETE FROM documents
+                WHERE filename = %s
+            """, (filename,))
+
+        db_conn.commit()
 
         return {
             "message": f"{filename} deleted successfully"
@@ -170,8 +184,12 @@ async def delete_pdf(filename: str):
 
     except Exception as e:
 
-        conn.rollback()
+        db_conn.rollback()
 
         return {
             "error": str(e)
         }
+
+    finally:
+
+        db_conn.close()

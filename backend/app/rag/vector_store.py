@@ -5,8 +5,9 @@ print("VECTOR_STORE: CHROMADB IMPORTED", flush=True)
 
 import logging
 from uuid import uuid4
-from app.db import conn, cursor
-
+from app.db import get_connection
+conn = get_connection()
+cursor = conn.cursor()
 print("VECTOR_STORE: OTHER IMPORTS DONE", flush=True)
 
 try:
