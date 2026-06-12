@@ -14,4 +14,3 @@ conn = psycopg2.connect(
 )
 print("Connection successful!")
 
-cursor = conn.cursor()
