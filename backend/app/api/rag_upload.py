@@ -53,20 +53,19 @@ def process_pdf(file_path: str, filename: str):
     try:
         print("\n========== PDF PROCESS STARTED ==========")
 
+        print("STEP 1")
         text = extract_text_from_pdf(file_path)
 
-        chunks = chunk_text(
-            text=text,
-            source=filename
-        )
+        print("STEP 2")
+        chunks = chunk_text(...)
 
-        enriched_chunks = (
-            embedding_model.generate_embeddings(
-                chunks
-            )
-        )
+        print("STEP 3")
+        enriched_chunks = embedding_model.generate_embeddings(...)
 
+        print("STEP 4")
         store_chunks(enriched_chunks)
+
+        print("STEP 5")
 
         print(
             "\n========== PDF PROCESS COMPLETED ==========\n"

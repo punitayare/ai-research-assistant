@@ -117,53 +117,88 @@ export default function UploadPage() {
   };
 
   const handleUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
 
-    const file = e.target.files?.[0];
+  const file = e.target.files?.[0];
 
-    if (!file) return;
+  if (!file) return;
 
-    const formData = new FormData();
+  if (uploading) return;
 
-    formData.append("file", file);
+  const formData = new FormData();
 
-    try {
+  formData.append("file", file);
 
-      setUploading(true);
+  try {
 
+    setUploading(true);
+
+    setProcessingDone(false);
+
+    console.log(
+      "Uploading:",
+      file.name
+    );
+
+    const processingPromise =
       simulateProcessingSteps();
 
-      const response = await axios.post(
-        "https://ai-research-assistant-production-0ae1.up.railway.app/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
+    const response = await axios.post(
+      "https://ai-research-assistant-production-0ae1.up.railway.app/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type":
+            "multipart/form-data",
+        },
+        timeout: 120000,
+      }
+    );
 
-      const newFile: UploadedFile = {
-        name: response.data.filename,
-        url: response.data.file_url,
-      };
+    console.log(
+      "Upload response:",
+      response.data
+    );
 
-      setUploadedFiles(
-        (prev) => [newFile, ...prev]
-      );
+    await processingPromise;
 
-    } catch (error) {
+    await fetchUploadedPdfs();
 
-      console.error(error);
+    setProcessingDone(true);
 
-    } finally {
+  } catch (error: any) {
 
-      setUploading(false);
+    console.error(
+      "UPLOAD ERROR:",
+      error
+    );
 
+    console.error(
+      "BACKEND ERROR:",
+      error?.response?.data
+    );
+
+    alert(
+      error?.response?.data?.detail ||
+      error?.response?.data?.error ||
+      error?.message ||
+      "Upload failed"
+    );
+
+    setProcessingStep(
+      "Upload failed"
+    );
+
+  } finally {
+
+    setUploading(false);
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
     }
-  };
+  }
+};
 
   const handleDelete = async (
     filename: string
@@ -229,7 +264,13 @@ export default function UploadPage() {
         {/* UPLOAD BOX */}
 
         <div
-          onClick={() => inputRef.current?.click()}
+          onClick={() => {
+
+  if (!uploading) {
+    inputRef.current?.click();
+  }
+
+}}
           className="border-2 border-dashed border-white/10 hover:border-violet-500 transition-all rounded-3xl bg-white/5 backdrop-blur-xl p-16 flex flex-col items-center justify-center text-center cursor-pointer"
         >
 
@@ -254,6 +295,7 @@ export default function UploadPage() {
             ref={inputRef}
             type="file"
             accept=".pdf"
+            disabled={uploading}
             onChange={handleUpload}
             className="hidden"
           />
