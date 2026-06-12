@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 
 print("RAG: importing db", flush=True)
-from app.db import cursor, conn
+from app.db import conn
 
 print("RAG: db imported", flush=True)
 
