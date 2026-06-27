@@ -80,7 +80,7 @@ export default function ChatPage() {
     try {
 
       const res = await axios.get(
-        "https://ai-research-assistant-production-0ae1.up.railway.app/uploaded-pdfs"
+        "https://ai-research-assistant-qy4g.onrender.com/uploaded-pdfs"
       );
 
       setPdfs(res.data.pdfs);
@@ -152,7 +152,7 @@ if (selectedPdfs.length === 0) {
 
       const response =
         await axios.post(
-          "https://ai-research-assistant-production-0ae1.up.railway.app/chat",
+          "https://ai-research-assistant-qy4g.onrender.com/chat",
           {
             query: currentQuery,
             document_names:
